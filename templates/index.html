@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPU Temperature Statistics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .panel {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px;
+            width: 100px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .stat-box h2 {
+            font-size: 22px;
+            color: #4CAF50;
+            margin: 0;
+        }
+        .stat-box p {
+            color: #555;
+            margin: 5px 0 0;
+        }
+        .average-box {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .average-box h2 {
+            font-size: 28px;
+            margin: 0;
+        }
+        .average-box p {
+            font-size: 18px;
+            margin: 5px 0 0;
+        }
+        .refresh-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .refresh-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="panel">
+            <h1>CPU Temperature Statistics</h1>
+            <div class="average-box">
+                <h2 id="average-temp">Loading...</h2>
+                <p>Average CPU Temperature</p>
+            </div>
+            <div class="stats" id="stats">
+            </div>
+            <button class="refresh-btn" onclick="fetchStats()">Refresh Data</button>
+        </div>
+    </div>
+
+    <script>
+        function fetchStats() {
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    const coreTemps = data.temperatures;
+                    const averageTemp = (coreTemps.reduce((acc, temp) => acc + temp, 0) / coreTemps.length).toFixed(2);
+                    
+                    const avgTempBox = document.getElementById('average-temp');
+                    avgTempBox.innerText = `${averageTemp}°C`;
+    
+                    const avgTempContainer = document.querySelector('.average-box');
+                    if (averageTemp >= 80) {
+                        avgTempContainer.style.backgroundColor = '#FF6347'; // Red
+                    } else if (averageTemp >= 60 && averageTemp < 80) {
+                        avgTempContainer.style.backgroundColor = '#FFA500'; // Orange
+                    } else {
+                        avgTempContainer.style.backgroundColor = '#4CAF50'; // Green
+                    }
+
+                    let statsHTML = '';
+                    coreTemps.forEach((temp, index) => {
+                        statsHTML += `
+                            <div class="stat-box">
+                                <h2>${temp}°C</h2>
+                                <p>Core ${index + 1}</p>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('stats').innerHTML = statsHTML;
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+    
+        setInterval(fetchStats, 10000);
+    
+        fetchStats();
+    </script>
+</body>
+</html>
